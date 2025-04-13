@@ -7,19 +7,38 @@ This repository contains the implementation of a self-instruct pipeline for lang
 3. Self-Curation: Filtering high-quality instruction-response pairs
 4. Model Fine-tuning: Training the final model on curated data
 
+## Model Selection
+
+This implementation uses the following models:
+- Base model: Llama 3.1 8B, a powerful and efficient open-source LLM
+- Evaluation model for curation: Meta's Llama 3.1-8B-chat for quality assessment
+- The fine-tuned models maintain the same architecture as the base model while optimizing for specific tasks
+
+## Unsloth Framework
+
+All fine-tuning in this project is powered by [Unsloth](https://github.com/unslothai/unsloth), a highly optimized library specifically designed for efficient LLM fine-tuning:
+
+- **Speed Optimization**: Unsloth accelerates training by 2-5x compared to standard fine-tuning approaches
+- **Memory Efficiency**: Uses 8-bit and 4-bit quantization to reduce VRAM requirements
+- **LoRA Integration**: Uses Low-Rank Adaptation method for parameter-efficient fine-tuning
+- **QLoRA Support**: Implements Quantized LoRA for even more efficient training
+
+
+These values can be adjusted in the respective training scripts to optimize for different training objectives.
+
 ## Scripts
 
 The scripts should be run in the following order:
 
 ### 1. `scripts/inverse_sft.py`
 
-This script finetunes Llama2 7B as a backward model that predicts instructions from completions. It uses the OpenAssistant-Guanaco dataset to train a model that can generate instructions given responses.
+This script finetunes Llama 3.1 8B as a backward model that predicts instructions from completions. It uses the OpenAssistant-Guanaco dataset to train a model that can generate instructions given responses.
 
 ```bash
 python scripts/inverse_sft.py
 ```
 
-**Hugging Face Model**: [YOUR_USERNAME/llama2-7b-backward](https://huggingface.co/YOUR_USERNAME/llama2-7b-backward)
+**Hugging Face Model**: [ssui-liu/backwards-guanaco-llama3.1-8b-sft](https://huggingface.co/ssui-liu/backwards-guanaco-llama3.1-8b-sft)
 
 ### 2. `scripts/self_augmentation_lima.py`
 
@@ -41,17 +60,17 @@ This script evaluates the quality of the generated instruction-response pairs us
 python scripts/self_curation.py
 ```
 
-**Hugging Face Dataset**: [YOUR_USERNAME/self-instruct-curated](https://huggingface.co/datasets/YOUR_USERNAME/self-instruct-curated)
+**Hugging Face Dataset**: [ssui-liu/curated-augmented-lima](https://huggingface.co/datasets/ssui-liu/curated-augmented-lima)
 
 ### 4. `scripts/finetune_model.py`
 
-This script finetunes the base Llama2 7B model on the curated dataset of high-quality instruction-response pairs.
+This script finetunes the base Llama 3.1 8B model on the curated dataset of high-quality instruction-response pairs.
 
 ```bash
 python scripts/finetune_model.py
 ```
 
-**Hugging Face Model**: [YOUR_USERNAME/llama2-7b-self-instruct](https://huggingface.co/YOUR_USERNAME/llama2-7b-self-instruct)
+**Hugging Face Model**: [ssui-liu/llama3.1-8b-lima-sft](https://huggingface.co/ssui-liu/llama3.1-8b-lima-sft)
 
 ## Data Files
 
@@ -64,3 +83,27 @@ python scripts/finetune_model.py
 - `data/self_augmented.json`: Generated instruction-response pairs from the self-augmentation step
 - `data/curated_dataset.json`: Initial curated dataset with quality ratings
 - `data/curated_dataset_all_evaluated.json`: Complete evaluated dataset with all quality metrics 
+
+## Requirements
+
+The project dependencies are specified in `requirements.txt`. Key dependencies include:
+
+```
+unsloth>=2024.5           # Efficient fine-tuning library
+torch>=2.2.0              # PyTorch for deep learning
+transformers>=4.35.0      # Hugging Face Transformers library
+datasets>=2.14.0          # Hugging Face Datasets library
+peft>=0.6.0               # Parameter-Efficient Fine-Tuning
+accelerate>=0.23.0        # Distributed training utilities
+bitsandbytes>=0.41.0      # Quantization utilities
+wandb>=0.15.0             # Weights & Biases for experiment tracking
+trl>=0.7.2                # Transformer Reinforcement Learning
+```
+
+To install all dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Experiments were run on an HPC server featuring a single **NVIDIA A800 GPU** with 80GB of memory.
